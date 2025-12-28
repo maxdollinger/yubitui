@@ -5,6 +5,7 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mdollinger/yubitui/clipboard"
 	"github.com/mdollinger/yubitui/yubikey"
 )
 
@@ -15,10 +16,12 @@ type (
 )
 
 type model struct {
-	accounts []string
-	cursor   int
-	code     string
-	key      *yubikey.Yubikey
+	accounts  []string
+	cursor    int
+	code      string
+	key       *yubikey.Yubikey
+	clipboard *clipboard.Clipboard
+	copied    bool
 }
 
 func initialModel() *model {
@@ -27,8 +30,13 @@ func initialModel() *model {
 		log.Fatal(err)
 	}
 
+	clip, err := clipboard.InitClipboard()
+	if err != nil {
+		log.Println(err.Error())
+	}
 	return &model{
-		key: key,
+		key:       key,
+		clipboard: clip,
 	}
 }
 
@@ -43,6 +51,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case codeMsg:
 		m.code = string(msg)
+		if m.clipboard != nil {
+			if err := m.clipboard.Copy(m.code); err == nil {
+				m.copied = true
+			}
+		}
 		return m, tea.Quit
 
 	case accountMsg:
@@ -76,7 +89,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	if m.code != "" {
 		account := m.accounts[m.cursor]
-		return fmt.Sprintf("Code for %s:\n%s\n", account, m.code)
+		copied := ""
+		if m.copied {
+			copied = " -> copied to clipboard"
+		}
+		return fmt.Sprintf("Code for %s:\n%s%s\n", account, m.code, copied)
 	}
 
 	return AccountView(&m)
