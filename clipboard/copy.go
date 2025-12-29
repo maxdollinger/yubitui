@@ -6,7 +6,8 @@ import (
 )
 
 type Clipboard struct {
-	cmd string
+	cp    string
+	paste string
 }
 
 type ClipbardNotFoundError struct{}
@@ -15,35 +16,50 @@ func (ce ClipbardNotFoundError) Error() string {
 	return "no Clipboard found"
 }
 
-var clipboards = []string{"wl-copy", "pb-copy"}
+var (
+	cpCmds    = []string{"wl-copy", "pb-copy"}
+	pasteCmds = []string{"wl-paste", "pb-paste"}
+)
 
 func InitClipboard() (*Clipboard, error) {
-	cmd := ""
-	for _, clip := range clipboards {
+	cmdIdx := -1
+	for i, clip := range cpCmds {
 		which := exec.Command("which", clip)
 		err := which.Run()
 		if err == nil {
-			cmd = clip
+			cmdIdx = i
 			break
 		}
 	}
 
-	if cmd == "" {
+	if cmdIdx < 0 {
 		return nil, errors.New("no clipboard found")
 	}
 
 	return &Clipboard{
-		cmd: cmd,
+		cp:    cpCmds[cmdIdx],
+		paste: pasteCmds[cmdIdx],
 	}, nil
 }
 
 func (c *Clipboard) Copy(str string) error {
-	copyCmd := exec.Command(c.cmd, str)
+	cmd := exec.Command(c.cp, str)
 
-	err := copyCmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (c *Clipboard) Paste() string {
+	cmd := exec.Command(c.paste)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	return string(output)
 }

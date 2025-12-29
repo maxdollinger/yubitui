@@ -3,8 +3,17 @@ package model
 type YubiKey interface {
 	ListAccountsI
 	GenerateCodeI
-	AddAccount(string, string) error
+	AddAccountI
+	DeleteAccountI
 	Close()
+}
+
+type DeleteAccountI interface {
+	DeleteAccount(string) error
+}
+
+type AddAccountI interface {
+	AddAccount(string, string) error
 }
 
 type ListAccountsI interface {
@@ -17,4 +26,8 @@ type CopyToClipboardI interface {
 
 type GenerateCodeI interface {
 	GenerateCode(string) (string, error)
+}
+
+type PasteI interface {
+	Paste() string
 }

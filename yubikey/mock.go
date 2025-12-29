@@ -1,9 +1,5 @@
 package yubikey
 
-import (
-	"fmt"
-)
-
 type YubikeyMock struct {
 	accounts []string
 }
@@ -23,7 +19,19 @@ func (y *YubikeyMock) GenerateCode(acc string) (string, error) {
 }
 
 func (y *YubikeyMock) AddAccount(account string, secret string) error {
-	fmt.Printf("Account: %s\nSecret: %s\n", account, secret)
+	y.accounts = append(y.accounts, account)
+	return nil
+}
+
+func (y *YubikeyMock) DeleteAccount(account string) error {
+	remaining := make([]string, 0, len(y.accounts)-1)
+	for _, val := range y.accounts {
+		if val != account {
+			remaining = append(remaining, val)
+		}
+	}
+	y.accounts = remaining
+
 	return nil
 }
 

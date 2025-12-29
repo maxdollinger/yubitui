@@ -48,11 +48,25 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.activeModel = generateCodeModel
 		return m, m.activeModel.Init()
 
-	default:
-		var cmd tea.Cmd
-		m.activeModel, cmd = m.activeModel.Update(msg)
-		return m, cmd
+	case AddAccountModelMsg:
+		addAccountModel := NewAddAcountModel(m.key, m.clipboard)
+		m.activeModel = addAccountModel
+		return m, m.activeModel.Init()
+
+	case DeleteAccountModelMsg:
+		deleteAccountModel := NewDeleteAccountModel(m.key, msg.account)
+		m.activeModel = deleteAccountModel
+		return m, m.activeModel.Init()
+
+	case tea.KeyMsg:
+		if msg.String() == "ctrl+c" {
+			return m, tea.Quit
+		}
 	}
+
+	var cmd tea.Cmd
+	m.activeModel, cmd = m.activeModel.Update(msg)
+	return m, cmd
 }
 
 func (m *RootModel) View() string {

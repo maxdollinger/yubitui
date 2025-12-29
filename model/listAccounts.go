@@ -5,16 +5,20 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
+type ListAccountsKeyI interface {
+	ListAccountsI
+	DeleteAccountI
+}
+
 type ListAccountsModel struct {
-	key      ListAccountsI
+	key      ListAccountsKeyI
 	accounts []string
 	cursor   int
 }
 
-func NewListAccountsModel(key ListAccountsI) *ListAccountsModel {
+func NewListAccountsModel(key ListAccountsKeyI) *ListAccountsModel {
 	return &ListAccountsModel{key: key}
 }
 
@@ -22,19 +26,17 @@ func (m *ListAccountsModel) Init() tea.Cmd {
 	return ListAccountsCmd(m.key)
 }
 
-var selectedStyle = lipgloss.NewStyle().
-	Bold(true).
-	Foreground(lipgloss.Color("#FAFAFA")).
-	Background(lipgloss.Color("#7D56F4"))
-
 func (m *ListAccountsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case AccountsListedMsg:
 		m.accounts = msg
+	case AccountDeletedMsg:
+		m.accounts = m.accounts[0:0]
+		return m, ListAccountsCmd(m.key)
 	case tea.KeyMsg:
 
 		switch msg.String() {
-		case "ctrl+c", "q", tea.KeyEsc.String():
+		case "q", tea.KeyEsc.String():
 			return m, tea.Quit
 
 		case "up", "k":
@@ -47,7 +49,13 @@ func (m *ListAccountsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 
-		case "enter", " ":
+		case "n":
+			return m, SwitchToAddAccountModelCmd()
+
+		case "d":
+			return m, SwitchToDeleteAccountModel(m.accounts[m.cursor])
+
+		case "enter":
 			return m, SwitchToGenerateCodeModelCmd(m.accounts[m.cursor])
 		}
 	}
@@ -57,19 +65,19 @@ func (m *ListAccountsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *ListAccountsModel) View() string {
 	var s strings.Builder
-	s.WriteString("Generate code for:\n\n")
+	s.WriteString("Accounts:\n\n")
 
 	for i, choice := range m.accounts {
 
 		line := choice
 		if m.cursor == i {
-			line = selectedStyle.Render(line)
+			line = listSelectedItem.Render(line)
 		}
 
 		fmt.Fprintf(&s, "%s\n", line)
 	}
 
-	s.WriteString("\nPress q to quit, n to add account.\n")
+	s.WriteString("\nPress q to quit, enter to generate code, n to add account, d to delete account.\n")
 
 	return s.String()
 }

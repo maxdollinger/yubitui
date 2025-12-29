@@ -24,6 +24,26 @@ func SwitchToListAccountsModelCmd() tea.Cmd {
 	}
 }
 
+type AddAccountModelMsg struct{}
+
+func SwitchToAddAccountModelCmd() tea.Cmd {
+	return func() tea.Msg {
+		return AddAccountModelMsg{}
+	}
+}
+
+type DeleteAccountModelMsg struct {
+	account string
+}
+
+func SwitchToDeleteAccountModel(account string) tea.Cmd {
+	return func() tea.Msg {
+		return DeleteAccountModelMsg{
+			account: account,
+		}
+	}
+}
+
 type CodeGeneratedMsg string
 
 func GenerateCodeCmd(key GenerateCodeI, account string) func() tea.Msg {
@@ -47,5 +67,18 @@ func ListAccountsCmd(key ListAccountsI) tea.Cmd {
 		}
 
 		return AccountsListedMsg(accounts)
+	}
+}
+
+type AccountDeletedMsg bool
+
+func DeleteAccountCmd(key DeleteAccountI, account string) tea.Cmd {
+	return func() tea.Msg {
+		err := key.DeleteAccount(account)
+		if err != nil {
+			return ErrMsg(err)
+		}
+
+		return AccountDeletedMsg(true)
 	}
 }
