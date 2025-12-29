@@ -189,6 +189,8 @@ func (m *AddAccountModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *AddAccountModel) View() string {
 	var b strings.Builder
 
+	b.WriteString("Add new TOTP account\n\n")
+
 	for i := range m.inputs {
 		b.WriteString(m.inputs[i].View())
 		if i < len(m.inputs)-1 {
@@ -196,11 +198,12 @@ func (m *AddAccountModel) View() string {
 		}
 	}
 
-	button := &blurredButton
+	button := bluredButton("add account")
 	if m.focusIndex == len(m.inputs) {
-		button = &focusedButton
+		button = focusedButton("add account")
 	}
-	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
+
+	fmt.Fprintf(&b, "\n\n%s\n\n", button)
 	if m.showHelp {
 		fmt.Fprint(&b, HelpText())
 	} else {

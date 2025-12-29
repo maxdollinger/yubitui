@@ -5,7 +5,12 @@ type YubiKey interface {
 	GenerateCodeI
 	AddAccountI
 	DeleteAccountI
+	RenameAccountI
 	Close()
+}
+
+type RenameAccountI interface {
+	RenameAccount(string, string) error
 }
 
 type DeleteAccountI interface {

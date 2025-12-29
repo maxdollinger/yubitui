@@ -59,6 +59,9 @@ func (m *ListAccountsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "n":
 			return m, SwitchToAddAccountModelCmd()
 
+		case "r":
+			return m, SwitchToRenameAccountModel(m.accounts[m.cursor])
+
 		case "d":
 			return m, SwitchToDeleteAccountModel(m.accounts[m.cursor])
 

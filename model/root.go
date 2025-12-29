@@ -58,6 +58,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.activeModel = deleteAccountModel
 		return m, m.activeModel.Init()
 
+	case RenameAccountModelMsg:
+		renameAccountModel := NewRenameAcountModel(m.key, msg.account)
+		m.activeModel = renameAccountModel
+		return m, m.activeModel.Init()
+
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit

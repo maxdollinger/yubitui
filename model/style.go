@@ -16,7 +16,13 @@ var (
 	cursorStyle  = focusedStyle
 	noStyle      = lipgloss.NewStyle()
 
-	focusedButton    = focusedStyle.Render("[ add account ]")
-	blurredButton    = fmt.Sprintf("[ %s ]", blurredStyle.Render("add account"))
 	listSelectedItem = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FAFAFA")).Background(lipgloss.Color(SELECTED_COLOR))
 )
+
+func focusedButton(text string) string {
+	return focusedStyle.Render(fmt.Sprintf("[ %s ]", text))
+}
+
+func bluredButton(text string) string {
+	return fmt.Sprintf("[ %s ]", blurredStyle.Render(text))
+}

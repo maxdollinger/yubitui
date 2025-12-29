@@ -44,6 +44,18 @@ func SwitchToDeleteAccountModel(account string) tea.Cmd {
 	}
 }
 
+type RenameAccountModelMsg struct {
+	account string
+}
+
+func SwitchToRenameAccountModel(account string) tea.Cmd {
+	return func() tea.Msg {
+		return RenameAccountModelMsg{
+			account: account,
+		}
+	}
+}
+
 type CodeGeneratedMsg string
 
 func GenerateCodeCmd(key GenerateCodeI, account string) func() tea.Msg {
@@ -80,5 +92,24 @@ func DeleteAccountCmd(key DeleteAccountI, account string) tea.Cmd {
 		}
 
 		return AccountDeletedMsg(true)
+	}
+}
+
+type AccountRenamedMsg struct {
+	old string
+	new string
+}
+
+func RenameAccountCmd(key RenameAccountI, account string, name string) tea.Cmd {
+	return func() tea.Msg {
+		err := key.RenameAccount(account, name)
+		if err != nil {
+			return ErrMsg(err)
+		}
+
+		return AccountRenamedMsg{
+			old: account,
+			new: name,
+		}
 	}
 }

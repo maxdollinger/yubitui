@@ -65,3 +65,9 @@ func (y *Yubikey) DeleteAccount(account string) error {
 
 	return cmd.Run()
 }
+
+func (y *Yubikey) RenameAccount(account string, name string) error {
+	cmd := exec.Command("ykman", "oath", "accounts", "rename", account, name, "-f")
+
+	return cmd.Run()
+}
