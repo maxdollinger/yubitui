@@ -67,3 +67,7 @@ func (y *Yubikey) Close() {
 		fmt.Println(err)
 	}
 }
+
+func (y *Yubikey) AddAccount(account string, secret string) error {
+	return y.card.Put(account, ykoath.HmacSha1, ykoath.Totp, 8, []byte(secret), false, 0)
+}

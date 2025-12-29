@@ -1,0 +1,64 @@
+package model
+
+import (
+	"log"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mdollinger/yubitui/clipboard"
+	"github.com/mdollinger/yubitui/yubikey"
+)
+
+type RootModel struct {
+	key         YubiKey
+	clipboard   *clipboard.Clipboard
+	activeModel tea.Model
+}
+
+func NewRootModel() *RootModel {
+	key, err := yubikey.InitKeyMock()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	clip, err := clipboard.InitClipboard()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	return &RootModel{
+		key:         key,
+		clipboard:   clip,
+		activeModel: NewListAccountsModel(key),
+	}
+}
+
+func (m RootModel) Init() tea.Cmd {
+	return m.activeModel.Init()
+}
+
+func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case ListAccountsModelMsg:
+		listAccountsModel := NewListAccountsModel(m.key)
+		m.activeModel = listAccountsModel
+		return m, m.activeModel.Init()
+
+	case GenerateCodeModelMsg:
+		generateCodeModel := NewGenerateCodeModel(m.key, m.clipboard, msg.Account)
+		m.activeModel = generateCodeModel
+		return m, m.activeModel.Init()
+
+	default:
+		var cmd tea.Cmd
+		m.activeModel, cmd = m.activeModel.Update(msg)
+		return m, cmd
+	}
+}
+
+func (m *RootModel) View() string {
+	return m.activeModel.View()
+}
+
+func (m *RootModel) Cleanup() {
+	m.key.Close()
+}
