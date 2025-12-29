@@ -18,7 +18,7 @@ func (y *YubikeyMock) GenerateCode(acc string) (string, error) {
 	return "abcd1234", nil
 }
 
-func (y *YubikeyMock) AddAccount(account string, secret string) error {
+func (y *YubikeyMock) AddAccount(account string, secret string, length int) error {
 	y.accounts = append(y.accounts, account)
 	return nil
 }

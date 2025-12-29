@@ -13,7 +13,7 @@ type DeleteAccountI interface {
 }
 
 type AddAccountI interface {
-	AddAccount(string, string) error
+	AddAccount(string, string, int) error
 }
 
 type ListAccountsI interface {

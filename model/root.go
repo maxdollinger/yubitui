@@ -15,7 +15,7 @@ type RootModel struct {
 }
 
 func NewRootModel() *RootModel {
-	key, err := yubikey.InitKeyMock()
+	key, err := yubikey.InitYubikey()
 	if err != nil {
 		log.Fatal(err)
 	}

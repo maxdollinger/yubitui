@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -16,14 +17,20 @@ type ListAccountsModel struct {
 	key      ListAccountsKeyI
 	accounts []string
 	cursor   int
+	spinner  spinner.Model
 }
 
 func NewListAccountsModel(key ListAccountsKeyI) *ListAccountsModel {
-	return &ListAccountsModel{key: key}
+	sModel := spinner.New()
+
+	return &ListAccountsModel{
+		key:     key,
+		spinner: sModel,
+	}
 }
 
 func (m *ListAccountsModel) Init() tea.Cmd {
-	return ListAccountsCmd(m.key)
+	return tea.Batch(ListAccountsCmd(m.key), m.spinner.Tick)
 }
 
 func (m *ListAccountsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -60,10 +67,20 @@ func (m *ListAccountsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if len(m.accounts) == 0 {
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
+	}
+
 	return m, nil
 }
 
 func (m *ListAccountsModel) View() string {
+	if len(m.accounts) == 0 {
+		return fmt.Sprintf("\n%s loading accounts...\n", m.spinner.View())
+	}
+
 	var s strings.Builder
 	s.WriteString("Accounts:\n\n")
 

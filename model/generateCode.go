@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"log"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -40,7 +41,18 @@ func (m *GenerateCodeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.copySuccess = true
 			}
 		}
-		return m, tea.Quit
+
+		return m, func() tea.Msg {
+			time.Sleep(time.Second * 5)
+			return ListAccountsModelMsg{}
+		}
+
+	case tea.KeyMsg:
+		s := msg.String()
+		switch s {
+		case "q":
+			return m, SwitchToListAccountsModelCmd()
+		}
 	}
 
 	return m, nil

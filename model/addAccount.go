@@ -96,12 +96,12 @@ func (m *AddAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Did the user press enter while the submit button was focused?
 			// If so, exit.
 			if s == "enter" && m.focusIndex == len(m.inputs) {
-				err := m.key.AddAccount(m.inputs[0].Value(), m.inputs[1].Value())
+				err := m.key.AddAccount(m.inputs[0].Value(), m.inputs[1].Value(), 6)
 				if err != nil {
 					fmt.Println(err)
 				}
 
-				return m, SwitchToListAccountsModelCmd()
+				return m, SwitchToGenerateCodeModelCmd(m.inputs[0].Value())
 			}
 			// Cycle indexes
 			if s == "up" || s == "shift+tab" || s == "k" {

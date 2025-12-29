@@ -1,73 +1,67 @@
 package yubikey
 
 import (
-	"fmt"
-
-	yk "cunicu.li/go-iso7816/devices/yubikey"
-	"cunicu.li/go-iso7816/drivers/pcsc"
-	"cunicu.li/go-ykoath/v2"
-	"github.com/ebfe/scard"
+	"errors"
+	"os/exec"
+	"strings"
 )
 
-type Yubikey struct {
-	card *ykoath.Card
-}
+type Yubikey struct{}
 
 func InitYubikey() (*Yubikey, error) {
-	ctx, err := scard.EstablishContext()
+	cmd := exec.Command("which", "ykman")
+
+	err := cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf("failed to establish context: %w", err)
+		return nil, errors.New("need ykman as depency")
 	}
 
-	sc, err := pcsc.OpenFirstCard(ctx, yk.HasOATH, true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to pcsc device: %w", err)
-	}
-
-	c, err := ykoath.NewCard(sc)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initalize yubikey: %w", err)
-	}
-
-	if _, err = c.Select(); err != nil {
-		return nil, fmt.Errorf("failed to initalize OATH session: %w", err)
-	}
-
-	return &Yubikey{
-		card: c,
-	}, nil
+	return &Yubikey{}, nil
 }
 
 func (y *Yubikey) ListAccounts() ([]string, error) {
-	names, err := y.card.List()
+	cmd := exec.Command("ykman", "oath", "accounts", "list")
+
+	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("error invoking list cmd: %w", err)
+		return nil, err
 	}
 
-	accountNames := make([]string, 0, 10)
-	for _, name := range names {
-		accountNames = append(accountNames, name.Name)
+	accounts := make([]string, 0, 20)
+	for line := range strings.SplitSeq(string(output), "\n") {
+		str := strings.TrimSpace(line)
+		if len(str) > 0 {
+			accounts = append(accounts, str)
+		}
 	}
 
-	return accountNames, nil
+	return accounts, nil
 }
 
 func (y *Yubikey) GenerateCode(account string) (string, error) {
-	calc, err := y.card.Calculate(account)
+	cmd := exec.Command("ykman", "oath", "accounts", "code", account)
+
+	output, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to calculate code for account %s: %w", account, err)
+		return "", err
 	}
 
-	return calc, nil
+	code := strings.TrimSpace(strings.ReplaceAll(string(output), account, ""))
+
+	return code, nil
 }
 
 func (y *Yubikey) Close() {
-	err := y.card.Close()
-	if err != nil {
-		fmt.Println(err)
-	}
 }
 
-func (y *Yubikey) AddAccount(account string, secret string) error {
-	return y.card.Put(account, ykoath.HmacSha1, ykoath.Totp, 8, []byte(secret), false, 0)
+func (y *Yubikey) AddAccount(account string, secret string, digits int) error {
+	cmd := exec.Command("ykman", "oath", "accounts", "add", account, secret, "-f")
+
+	return cmd.Run()
+}
+
+func (y *Yubikey) DeleteAccount(account string) error {
+	cmd := exec.Command("ykman", "oath", "accounts", "delete", account, "-f")
+
+	return cmd.Run()
 }
