@@ -10,61 +10,62 @@ import (
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mdollinger/yubitui/utils"
 )
 
-type AddAccountModel struct {
+type AddModel struct {
 	focusIndex int
 	inputs     []textinput.Model
 	key        AddAccountI
+	clipboard  PasteI
 	inputMode  bool
 	showHelp   bool
 	keyStack   []string
 }
 
-func NewAddAcountModel(key AddAccountI, clip PasteI) *AddAccountModel {
-	m := AddAccountModel{
-		inputs: make([]textinput.Model, 2),
-		key:    key,
+func NewAddModel(key AddAccountI, clip PasteI) *AddModel {
+	m := AddModel{
+		inputs:    make([]textinput.Model, 2),
+		key:       key,
+		clipboard: clip,
 	}
 
-	var t textinput.Model
 	for i := range m.inputs {
-		t = textinput.New()
+		t := textinput.New()
 		t.Cursor.Style = cursorStyle
 		t.Cursor.SetMode(cursor.CursorHide)
 		t.CharLimit = 64
+		t.Width = 64
 
 		switch i {
 		case 0:
 			t.Placeholder = "account"
 			t.Focus()
-			t.PromptStyle = focusedStyle
-			t.TextStyle = focusedStyle
+			setInputFocusedStyle(&t)
 		case 1:
 			t.Placeholder = "secret"
-			t.SetValue(clip.Paste())
 		}
 
-		t.Width = len(t.Placeholder)
 		m.inputs[i] = t
 	}
 
 	return &m
 }
 
-func (m *AddAccountModel) Init() tea.Cmd {
-	return textinput.Blink
+func (m *AddModel) Init() tea.Cmd {
+	return nil
 }
 
-func (m *AddAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *AddModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.inputMode {
 		return m.InputModeUpdates(msg)
 	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		m.keyStack = append(m.keyStack, msg.String())
-		switch msg.String() {
+		s := msg.String()
+		m.keyStack = append(m.keyStack, s)
+		switch s {
 		case "i":
 			if input, ok := m.getSelectedInput(); ok {
 				cmd := input.Cursor.SetMode(cursor.CursorBlink)
@@ -73,7 +74,7 @@ func (m *AddAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "q":
-			return m, SwitchToListAccountsModelCmd()
+			return m, NewMainMenuModelCmd()
 
 		case "h":
 			m.showHelp = !m.showHelp
@@ -89,56 +90,64 @@ func (m *AddAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				input.Reset()
 			}
 
-		// Set focus to next input
-		case "tab", "enter", "up", "down", "j", "k":
-			s := msg.String()
-
-			// Did the user press enter while the submit button was focused?
-			// If so, exit.
-			if s == "enter" && m.focusIndex == len(m.inputs) {
-				err := m.key.AddAccount(m.inputs[0].Value(), m.inputs[1].Value(), 6)
-				if err != nil {
-					fmt.Println(err)
+		case "p":
+			if input, ok := m.getSelectedInput(); ok {
+				str := m.clipboard.Paste()
+				str = strings.ReplaceAll(str, "\n", " ")
+				str = strings.TrimSpace(str)
+				if len(str) > 64 {
+					str = str[:64]
 				}
 
-				return m, SwitchToGenerateCodeModelCmd(m.inputs[0].Value())
+				input.SetValue(str)
+			}
+
+			return m, nil
+
+		// Set focus to next input
+		case "tab", "enter", "up", "down", "j", "k":
+			// Did the user press enter while the submit button was focused?
+			if s == "enter" && m.focusIndex == len(m.inputs) {
+				name := m.inputs[0].Value()
+				secret := m.inputs[1].Value()
+				err := m.key.AddAccount(name, secret, 6)
+				if err != nil {
+					return m, ErrCmd(err)
+				}
+
+				return m, NewCodeModelCmd(name)
 			}
 			// Cycle indexes
-			if s == "up" || s == "shift+tab" || s == "k" {
+			if s == "up" || s == "k" {
 				m.focusIndex--
 			} else {
 				m.focusIndex++
 			}
 
-			if m.focusIndex > len(m.inputs) {
-				m.focusIndex = 0
-			} else if m.focusIndex < 0 {
-				m.focusIndex = len(m.inputs)
-			}
+			m.focusIndex = utils.Clamp(m.focusIndex, 0, len(m.inputs))
 
-			cmds := make([]tea.Cmd, len(m.inputs))
+			var cmd tea.Cmd
 			for i := 0; i <= len(m.inputs)-1; i++ {
+				input := &m.inputs[i]
 				if i == m.focusIndex {
 					// Set focused state
-					cmds[i] = m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = focusedStyle
-					m.inputs[i].TextStyle = focusedStyle
-					continue
+					cmd = input.Focus()
+					setInputFocusedStyle(input)
+				} else {
+					// Remove focused state
+					input.Blur()
+					setInputNoStyle(input)
 				}
-				// Remove focused state
-				m.inputs[i].Blur()
-				m.inputs[i].PromptStyle = noStyle
-				m.inputs[i].TextStyle = noStyle
 			}
 
-			return m, tea.Batch(cmds...)
+			return m, cmd
 		}
 	}
 
 	return m, nil
 }
 
-func (m *AddAccountModel) getSelectedInput() (*textinput.Model, bool) {
+func (m *AddModel) getSelectedInput() (*textinput.Model, bool) {
 	if m.focusIndex < len(m.inputs) && m.focusIndex >= 0 {
 		return &m.inputs[m.focusIndex], true
 	}
@@ -146,7 +155,7 @@ func (m *AddAccountModel) getSelectedInput() (*textinput.Model, bool) {
 	return nil, false
 }
 
-func (m *AddAccountModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *AddModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
 	input, ok := m.getSelectedInput()
 	if !ok {
 		m.inputMode = false
@@ -160,7 +169,7 @@ func (m *AddAccountModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.inputMode = false
 			input.SetCursor(len(input.Value()))
 			cmd := input.Cursor.SetMode(cursor.CursorHide)
-			return m, cmd
+			return m, tea.Batch(cmd, KeyCmd(msg))
 		case "ctrl+h":
 			current := input.Position()
 			input.SetCursor(current - 1)
@@ -174,19 +183,10 @@ func (m *AddAccountModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	m.inputs[m.focusIndex], cmd = input.Update(msg)
-
-	defaultWidth := len(input.Placeholder)
-	inputWidth := len(input.Value())
-	if inputWidth > 0 {
-		input.Width = inputWidth
-	} else {
-		input.Width = defaultWidth
-	}
-
 	return m, cmd
 }
 
-func (m *AddAccountModel) View() string {
+func (m *AddModel) View() string {
 	var b strings.Builder
 
 	b.WriteString("Add new TOTP account\n\n")
@@ -205,21 +205,25 @@ func (m *AddAccountModel) View() string {
 
 	fmt.Fprintf(&b, "\n\n%s\n\n", button)
 	if m.showHelp {
-		fmt.Fprint(&b, HelpText())
+		fmt.Fprint(&b, addHelptText())
 	} else {
-		fmt.Fprintf(&b, "press q to go back, h to show help")
+		fmt.Fprintf(&b, "press q to go back, h to toggle help")
 	}
 
 	return b.String()
 }
 
-func HelpText() string {
+func addHelptText() string {
 	var b strings.Builder
 
-	fmt.Fprintln(&b, "i   - enter input mode")
-	fmt.Fprintln(&b, "esc - leave input mode")
-	fmt.Fprintln(&b, "dd  - delete input field")
-	fmt.Fprintln(&b, "q   - go back to accounts list")
+	fmt.Fprintln(&b, "i     - enter input mode")
+	fmt.Fprintln(&b, "p     - to paste from clipboard")
+	fmt.Fprintln(&b, "esc   - leave input mode")
+	fmt.Fprintln(&b, "enter - leave input mode and go to next field")
+	fmt.Fprintln(&b, "ctr+h - move cursor left while in input mode")
+	fmt.Fprintln(&b, "ctr+l - move cursor right while in input mode")
+	fmt.Fprintln(&b, "dd    - delete input field")
+	fmt.Fprintln(&b, "q     - go back to accounts list")
 
 	return b.String()
 }

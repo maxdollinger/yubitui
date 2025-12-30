@@ -6,38 +6,38 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type DeleteAccountModel struct {
+type DeleteModel struct {
 	key     DeleteAccountI
 	account string
 }
 
-func NewDeleteAccountModel(key DeleteAccountI, account string) *DeleteAccountModel {
-	return &DeleteAccountModel{
+func NewDeleteModel(key DeleteAccountI, account string) *DeleteModel {
+	return &DeleteModel{
 		key:     key,
 		account: account,
 	}
 }
 
-func (m *DeleteAccountModel) Init() tea.Cmd {
+func (m *DeleteModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m *DeleteAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *DeleteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case AccountDeletedMsg:
-		return m, SwitchToListAccountsModelCmd()
+		return m, NewMainMenuModelCmd()
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "y":
 			return m, DeleteAccountCmd(m.key, m.account)
 		case "n":
-			return m, SwitchToListAccountsModelCmd()
+			return m, NewMainMenuModelCmd()
 		}
 	}
 
 	return m, nil
 }
 
-func (m *DeleteAccountModel) View() string {
+func (m *DeleteModel) View() string {
 	return fmt.Sprintf("\nAre you sure to delete account \"%s\" [y/n]\n", m.account)
 }

@@ -1,6 +1,6 @@
 package model
 
-type YubiKey interface {
+type YubiKeyI interface {
 	ListAccountsI
 	GenerateCodeI
 	AddAccountI

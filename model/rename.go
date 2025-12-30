@@ -12,7 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type RenameAccountModel struct {
+type RenameModel struct {
 	focusIndex int
 	nameInput  textinput.Model
 	key        RenameAccountI
@@ -22,8 +22,8 @@ type RenameAccountModel struct {
 	keyStack   []string
 }
 
-func NewRenameAcountModel(key RenameAccountI, account string) *RenameAccountModel {
-	m := RenameAccountModel{
+func NewRenameModel(key RenameAccountI, account string) *RenameModel {
+	m := RenameModel{
 		key:     key,
 		account: account,
 	}
@@ -43,11 +43,11 @@ func NewRenameAcountModel(key RenameAccountI, account string) *RenameAccountMode
 	return &m
 }
 
-func (m *RenameAccountModel) Init() tea.Cmd {
+func (m *RenameModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m *RenameAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *RenameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.inputMode {
 		return m.InputModeUpdates(msg)
 	}
@@ -64,7 +64,7 @@ func (m *RenameAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "q":
-			return m, SwitchToListAccountsModelCmd()
+			return m, NewMainMenuModelCmd()
 
 		case "h":
 			m.showHelp = !m.showHelp
@@ -90,7 +90,7 @@ func (m *RenameAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					fmt.Println(err)
 				}
 
-				return m, SwitchToListAccountsModelCmd()
+				return m, NewMainMenuModelCmd()
 			}
 			// Cycle indexes
 			m.moveFocus(s)
@@ -113,7 +113,7 @@ func (m *RenameAccountModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *RenameAccountModel) moveFocus(s string) {
+func (m *RenameModel) moveFocus(s string) {
 	if s == "up" || s == "k" {
 		m.focusIndex--
 	} else {
@@ -127,7 +127,7 @@ func (m *RenameAccountModel) moveFocus(s string) {
 	}
 }
 
-func (m *RenameAccountModel) getSelectedInput() (*textinput.Model, bool) {
+func (m *RenameModel) getSelectedInput() (*textinput.Model, bool) {
 	if m.focusIndex == 0 {
 		return &m.nameInput, true
 	}
@@ -135,7 +135,7 @@ func (m *RenameAccountModel) getSelectedInput() (*textinput.Model, bool) {
 	return nil, false
 }
 
-func (m *RenameAccountModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *RenameModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
 	input, ok := m.getSelectedInput()
 	if !ok {
 		m.inputMode = false
@@ -177,7 +177,7 @@ func (m *RenameAccountModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) 
 	return m, cmd
 }
 
-func (m *RenameAccountModel) View() string {
+func (m *RenameModel) View() string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "Rename account \"%s\"\n\n", m.account)
@@ -189,7 +189,7 @@ func (m *RenameAccountModel) View() string {
 	}
 	fmt.Fprintf(&b, "\n%s\n\n", button)
 	if m.showHelp {
-		fmt.Fprint(&b, HelpText())
+		fmt.Fprint(&b, addHelptText())
 	} else {
 		fmt.Fprintf(&b, "press q to go back, h to show help")
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 type RootModel struct {
-	key         YubiKey
+	key         YubiKeyI
 	clipboard   *clipboard.Clipboard
 	activeModel tea.Model
 }
@@ -28,7 +28,7 @@ func NewRootModel() *RootModel {
 	return &RootModel{
 		key:         key,
 		clipboard:   clip,
-		activeModel: NewListAccountsModel(key),
+		activeModel: NewMainMenuModel(key),
 	}
 }
 
@@ -38,28 +38,28 @@ func (m RootModel) Init() tea.Cmd {
 
 func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case ListAccountsModelMsg:
-		listAccountsModel := NewListAccountsModel(m.key)
+	case NewMainMenuModelMsg:
+		listAccountsModel := NewMainMenuModel(m.key)
 		m.activeModel = listAccountsModel
 		return m, m.activeModel.Init()
 
-	case GenerateCodeModelMsg:
-		generateCodeModel := NewGenerateCodeModel(m.key, m.clipboard, msg.Account)
+	case NewCodeModelMsg:
+		generateCodeModel := NewCodeModel(m.key, m.clipboard, msg.Account)
 		m.activeModel = generateCodeModel
 		return m, m.activeModel.Init()
 
-	case AddAccountModelMsg:
-		addAccountModel := NewAddAcountModel(m.key, m.clipboard)
+	case NewAddModelMsg:
+		addAccountModel := NewAddModel(m.key, m.clipboard)
 		m.activeModel = addAccountModel
 		return m, m.activeModel.Init()
 
-	case DeleteAccountModelMsg:
-		deleteAccountModel := NewDeleteAccountModel(m.key, msg.account)
+	case NewDeleteModelMsg:
+		deleteAccountModel := NewDeleteModel(m.key, msg.account)
 		m.activeModel = deleteAccountModel
 		return m, m.activeModel.Init()
 
-	case RenameAccountModelMsg:
-		renameAccountModel := NewRenameAcountModel(m.key, msg.account)
+	case NewRenameModelMsg:
+		renameAccountModel := NewRenameModel(m.key, msg.account)
 		m.activeModel = renameAccountModel
 		return m, m.activeModel.Init()
 

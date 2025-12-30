@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -25,4 +26,16 @@ func focusedButton(text string) string {
 
 func bluredButton(text string) string {
 	return fmt.Sprintf("[ %s ]", blurredStyle.Render(text))
+}
+
+func setInputFocusedStyle(input *textinput.Model) {
+	input.PromptStyle = focusedStyle
+	input.TextStyle = focusedStyle
+	input.Cursor.TextStyle = focusedStyle
+}
+
+func setInputNoStyle(input *textinput.Model) {
+	input.PromptStyle = noStyle
+	input.TextStyle = noStyle
+	input.Cursor.TextStyle = noStyle
 }

@@ -1,56 +1,64 @@
 package model
 
 import (
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type ErrMsg error
 
-type GenerateCodeModelMsg struct {
+func ErrCmd(err error) tea.Cmd {
+	return func() tea.Msg {
+		return ErrMsg(err)
+	}
+}
+
+type NewCodeModelMsg struct {
 	Account string
 }
 
-func SwitchToGenerateCodeModelCmd(account string) tea.Cmd {
+func NewCodeModelCmd(account string) tea.Cmd {
 	return func() tea.Msg {
-		return GenerateCodeModelMsg{Account: account}
+		return NewCodeModelMsg{Account: account}
 	}
 }
 
-type ListAccountsModelMsg struct{}
+type NewMainMenuModelMsg struct{}
 
-func SwitchToListAccountsModelCmd() tea.Cmd {
+func NewMainMenuModelCmd() tea.Cmd {
 	return func() tea.Msg {
-		return ListAccountsModelMsg{}
+		return NewMainMenuModelMsg{}
 	}
 }
 
-type AddAccountModelMsg struct{}
+type NewAddModelMsg struct{}
 
-func SwitchToAddAccountModelCmd() tea.Cmd {
+func NewAddModelCmd() tea.Cmd {
 	return func() tea.Msg {
-		return AddAccountModelMsg{}
+		return NewAddModelMsg{}
 	}
 }
 
-type DeleteAccountModelMsg struct {
+type NewDeleteModelMsg struct {
 	account string
 }
 
-func SwitchToDeleteAccountModel(account string) tea.Cmd {
+func NewDeleteModelCmd(account string) tea.Cmd {
 	return func() tea.Msg {
-		return DeleteAccountModelMsg{
+		return NewDeleteModelMsg{
 			account: account,
 		}
 	}
 }
 
-type RenameAccountModelMsg struct {
+type NewRenameModelMsg struct {
 	account string
 }
 
-func SwitchToRenameAccountModel(account string) tea.Cmd {
+func NewRenameModelCmd(account string) tea.Cmd {
 	return func() tea.Msg {
-		return RenameAccountModelMsg{
+		return NewRenameModelMsg{
 			account: account,
 		}
 	}
@@ -111,5 +119,25 @@ func RenameAccountCmd(key RenameAccountI, account string, name string) tea.Cmd {
 			old: account,
 			new: name,
 		}
+	}
+}
+
+type IntervalMsg struct {
+	duration time.Duration
+	tickTime time.Time
+}
+
+func IntervalCmd(d time.Duration) tea.Cmd {
+	return tea.Tick(d, func(t time.Time) tea.Msg {
+		return IntervalMsg{
+			duration: d,
+			tickTime: t,
+		}
+	})
+}
+
+func KeyCmd(msg tea.KeyMsg) tea.Cmd {
+	return func() tea.Msg {
+		return msg
 	}
 }
