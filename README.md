@@ -11,7 +11,7 @@ This tool was created to provide a simple and efficient way to access YubiKey OT
 Before you begin, ensure you have `ykman` installed and accessible in your system's PATH.
 
 1.  **Install `ykman`:**
-    Follow the official instructions to install the [YubiKey Manager (ykman)](https://support.yubico.com/hc/en-us/articles/360013789900-YubiKey-Manager-CLI-ykman-User-Manual).
+    Follow the official instructions to install the [YubiKey Manager (ykman)](https://docs.yubico.com/software/yubikey/tools/ykman/Install_ykman.html).
 
 2.  **Install Yubitui:**
     ```sh
@@ -25,5 +25,3 @@ Simply run the application from your terminal:
 ```sh
 yubitui
 ```
-
-The interface will display your 2FA codes. You can navigate the list with the arrow keys and press `Enter` to copy a code to your clipboard.
