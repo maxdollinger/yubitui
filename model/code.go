@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"log"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -34,9 +34,6 @@ func (m *CodeModel) Init() tea.Cmd {
 
 func (m *CodeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case ErrMsg:
-		log.Fatal(msg)
-
 	case IntervalMsg:
 		m.waitCnt += int(msg.duration.Seconds())
 		if m.waitCnt == 5 {
@@ -50,10 +47,11 @@ func (m *CodeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.clipboard != nil {
 			if err := m.clipboard.Copy(m.code); err == nil {
 				m.copySuccess = true
+				return m, IntervalCmd(time.Second)
 			}
 		}
 
-		return m, IntervalCmd(time.Second)
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
@@ -65,12 +63,20 @@ func (m *CodeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *CodeModel) View() string {
-	copied := ""
-	if m.copySuccess {
-		copied = "  ... code copied"
+	if len(m.code) == 0 {
+		return "\n...generating code\n"
 	}
 
-	left := m.waitTime - m.waitCnt
-	waitMsg := fmt.Sprintf("back to accounts in %ds", left)
-	return fmt.Sprintf("Code for %s:\n%s\n%s\n\n%s\n", m.account, m.code, copied, waitMsg)
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "TOTP code for '%s':\n\n", m.account)
+	sb.WriteString(codeStyle.Render(m.code))
+	if m.copySuccess {
+		sb.WriteString("  ... code copied\n\n")
+		left := m.waitTime - m.waitCnt
+		fmt.Fprintf(&sb, "back to accounts in %ds\n", left)
+	} else {
+		sb.WriteString("\n\npress q to go back or ctrl+c to quit")
+	}
+
+	return sb.String()
 }

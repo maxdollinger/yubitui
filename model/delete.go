@@ -24,8 +24,6 @@ func (m *DeleteModel) Init() tea.Cmd {
 
 func (m *DeleteModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case AccountDeletedMsg:
-		return m, NewMainMenuModelCmd()
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "y":

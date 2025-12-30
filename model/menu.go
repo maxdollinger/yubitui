@@ -33,9 +33,6 @@ func (m *MenuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case AccountsListedMsg:
 		m.accounts = msg
-	case AccountDeletedMsg:
-		m.accounts = m.accounts[0:0]
-		return m, ListAccountsCmd(m.key)
 	case tea.KeyMsg:
 
 		switch msg.String() {
@@ -88,12 +85,11 @@ func (m *MenuModel) View() string {
 
 	for i, choice := range m.accounts {
 
-		line := choice
 		if m.cursor == i {
-			line = listSelectedItem.Render(line)
+			choice = listSelectedItem.Render(choice)
 		}
 
-		fmt.Fprintf(&s, "%s\n", line)
+		fmt.Fprintf(&s, "%s\n", choice)
 	}
 
 	s.WriteString("\n")

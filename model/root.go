@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,6 +13,7 @@ type RootModel struct {
 	key         YubiKeyI
 	clipboard   *clipboard.Clipboard
 	activeModel tea.Model
+	err         error
 }
 
 func NewRootModel() *RootModel {
@@ -38,6 +40,9 @@ func (m RootModel) Init() tea.Cmd {
 
 func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case ErrMsg:
+		m.err = msg
+		return m, nil
 	case NewMainMenuModelMsg:
 		listAccountsModel := NewMainMenuModel(m.key)
 		m.activeModel = listAccountsModel
@@ -67,6 +72,11 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
+
+		if m.err != nil {
+			m.err = nil
+			return m, m.activeModel.Init()
+		}
 	}
 
 	var cmd tea.Cmd
@@ -75,6 +85,10 @@ func (m *RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *RootModel) View() string {
+	if m.err != nil {
+		err := errStyle.Render(m.err.Error())
+		return fmt.Sprintf("\n%s\n\n press any key to go back", err)
+	}
 	return m.activeModel.View()
 }
 

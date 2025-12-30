@@ -110,12 +110,8 @@ func (m *AddModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if s == "enter" && m.focusIndex == len(m.inputs) {
 				name := m.inputs[0].Value()
 				secret := m.inputs[1].Value()
-				err := m.key.AddAccount(name, secret, 6)
-				if err != nil {
-					return m, ErrCmd(err)
-				}
 
-				return m, NewCodeModelCmd(name)
+				return m, AddAccountCmd(m.key, name, secret)
 			}
 			// Cycle indexes
 			if s == "up" || s == "k" {

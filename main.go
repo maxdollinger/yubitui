@@ -11,7 +11,7 @@ func main() {
 	model := model.NewRootModel()
 	defer model.Cleanup()
 
-	p := tea.NewProgram(model)
+	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("Alas, there's been an error: %s", err)
 	}

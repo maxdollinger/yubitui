@@ -90,8 +90,6 @@ func ListAccountsCmd(key ListAccountsI) tea.Cmd {
 	}
 }
 
-type AccountDeletedMsg bool
-
 func DeleteAccountCmd(key DeleteAccountI, account string) tea.Cmd {
 	return func() tea.Msg {
 		err := key.DeleteAccount(account)
@@ -99,13 +97,22 @@ func DeleteAccountCmd(key DeleteAccountI, account string) tea.Cmd {
 			return ErrMsg(err)
 		}
 
-		return AccountDeletedMsg(true)
+		return NewMainMenuModelMsg{}
 	}
 }
 
-type AccountRenamedMsg struct {
-	old string
-	new string
+func AddAccountCmd(key AddAccountI, account string, secret string) tea.Cmd {
+	return func() tea.Msg {
+		err := key.AddAccount(account, secret, 8)
+		if err != nil {
+			return ErrMsg(err)
+		}
+
+		// generate code for verification after an account was added
+		return NewCodeModelMsg{
+			Account: account,
+		}
+	}
 }
 
 func RenameAccountCmd(key RenameAccountI, account string, name string) tea.Cmd {
@@ -115,10 +122,8 @@ func RenameAccountCmd(key RenameAccountI, account string, name string) tea.Cmd {
 			return ErrMsg(err)
 		}
 
-		return AccountRenamedMsg{
-			old: account,
-			new: name,
-		}
+		// after rename go back to menu
+		return NewMainMenuModelMsg{}
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mdollinger/yubitui/utils"
 )
 
 type RenameModel struct {
@@ -35,8 +36,7 @@ func NewRenameModel(key RenameAccountI, account string) *RenameModel {
 	t.Placeholder = "name"
 	t.SetValue(m.account)
 	t.Focus()
-	t.PromptStyle = focusedStyle
-	t.TextStyle = focusedStyle
+	setInputFocusedStyle(&t)
 
 	m.nameInput = t
 
@@ -44,7 +44,7 @@ func NewRenameModel(key RenameAccountI, account string) *RenameModel {
 }
 
 func (m *RenameModel) Init() tea.Cmd {
-	return textinput.Blink
+	return nil
 }
 
 func (m *RenameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -85,25 +85,19 @@ func (m *RenameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			s := msg.String()
 
 			if s == "enter" && m.focusIndex == 1 {
-				err := m.key.RenameAccount(m.account, m.nameInput.Value())
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				return m, NewMainMenuModelCmd()
+				newName := m.nameInput.Value()
+				return m, RenameAccountCmd(m.key, m.account, newName)
 			}
 			// Cycle indexes
 			m.moveFocus(s)
 
 			var cmd tea.Cmd
 			if m.focusIndex == 0 {
-				m.nameInput.PromptStyle = focusedStyle
-				m.nameInput.TextStyle = focusedStyle
 				cmd = m.nameInput.Focus()
+				setInputFocusedStyle(&m.nameInput)
 			} else {
 				m.nameInput.Blur()
-				m.nameInput.PromptStyle = noStyle
-				m.nameInput.TextStyle = noStyle
+				setInputNoStyle(&m.nameInput)
 			}
 
 			return m, cmd
@@ -120,11 +114,7 @@ func (m *RenameModel) moveFocus(s string) {
 		m.focusIndex++
 	}
 
-	if m.focusIndex > 1 {
-		m.focusIndex = 0
-	} else if m.focusIndex < 0 {
-		m.focusIndex = 0
-	}
+	m.focusIndex = utils.Clamp(m.focusIndex, 0, 1)
 }
 
 func (m *RenameModel) getSelectedInput() (*textinput.Model, bool) {
@@ -149,9 +139,7 @@ func (m *RenameModel) InputModeUpdates(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.inputMode = false
 			input.SetCursor(len(input.Value()))
 			cmd := input.Cursor.SetMode(cursor.CursorHide)
-			return m, tea.Batch(func() tea.Msg {
-				return msg
-			}, cmd)
+			return m, tea.Batch(cmd, KeyCmd(msg))
 		case "ctrl+h":
 			current := input.Position()
 			input.SetCursor(current - 1)

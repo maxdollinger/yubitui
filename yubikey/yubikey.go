@@ -2,6 +2,7 @@ package yubikey
 
 import (
 	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -57,7 +58,13 @@ func (y *Yubikey) Close() {
 func (y *Yubikey) AddAccount(account string, secret string, digits int) error {
 	cmd := exec.Command("ykman", "oath", "accounts", "add", account, secret, "-f")
 
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		errStr := y.getErrorLine(string(output))
+		return fmt.Errorf("error adding account:\n\n%s\n%s", err, errStr)
+	}
+
+	return nil
 }
 
 func (y *Yubikey) DeleteAccount(account string) error {
@@ -69,5 +76,23 @@ func (y *Yubikey) DeleteAccount(account string) error {
 func (y *Yubikey) RenameAccount(account string, name string) error {
 	cmd := exec.Command("ykman", "oath", "accounts", "rename", account, name, "-f")
 
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		errStr := y.getErrorLine(string(output))
+		return fmt.Errorf("error renaming account:\n\n%s\n%s", err, errStr)
+	}
+
+	return nil
+}
+
+func (y *Yubikey) getErrorLine(output string) string {
+	err := output
+	for line := range strings.Lines(output) {
+		if strings.HasPrefix(line, "Error") {
+			err = strings.ReplaceAll(line, "Error:", "")
+			break
+		}
+	}
+
+	return strings.TrimSpace(err)
 }

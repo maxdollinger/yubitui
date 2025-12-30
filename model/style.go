@@ -16,6 +16,12 @@ var (
 	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	cursorStyle  = focusedStyle
 	noStyle      = lipgloss.NewStyle()
+	codeStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00cc22"))
+	errStyle     = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#cc0000")).
+			Border(lipgloss.RoundedBorder(), true, true, true, true).
+			MarginLeft(4).
+			Padding(2)
 
 	listSelectedItem = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FAFAFA")).Background(lipgloss.Color(SELECTED_COLOR))
 )
